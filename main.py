@@ -11,16 +11,16 @@ app = Flask(__name__)
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    bot.send_message(message.chat.id, 'Привет! Напиши название города на английском языке')
+    bot.send_message(message.chat.id, 'Привет рад тебя видеть! Напиши название города')
 
 @bot.message_handler(content_types=['text'])
 def get_weather(message):
-    city = message.text.strip().lower()
+    city = message.text.strip()
     res = requests.get(f'https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={OPENWEATHER_API}&units=metric&lang=ru')
     data = json.loads(res.text)
 
     if data.get("cod") != "200":
-        bot.send_message(message.chat.id, "❌ Город не найден. Напиши название города на английском языке")
+        bot.send_message(message.chat.id, "❌ Город не найден. Попробуй написать название на английском или проверь правильность написания.")
         return
 
     temp = round(data['list'][0]['main']['temp'])
@@ -73,6 +73,5 @@ if __name__ == "__main__":
     bot.remove_webhook()
     bot.set_webhook(url=f"https://openweather365.onrender.com/{TELEGRAM_TOKEN}")
     app.run(host="0.0.0.0", port=5000)
-
 
 
