@@ -1,20 +1,25 @@
+from flask import Flask
+import threading
 import telebot
 import requests
 import json
+import os
 
-bot = telebot.TeleBot('8353978400:AAGTWnBSvz3KIfkJAUegpBWjurL_PBvmBhM')
-API = 'e9ed9cc83a633d513fc8fd7acbd2a24b'
+app = Flask(__name__)
 
+TELEGRAM_TOKEN = 'твоя строка токена'
+OPENWEATHER_API = 'твоя строка API'
+
+bot = telebot.TeleBot(TELEGRAM_TOKEN)
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    bot.send_message(message.chat.id, 'Привет рад тебя видеть! Напиши название города')
-
+    bot.send_message(message.chat.id, 'Привет! Напиши название города')
 
 @bot.message_handler(content_types=['text'])
 def get_weather(message):
     city = message.text.strip().lower()
-    res = requests.get(f'https://api.openweathermap.org/data/2.5/weather?q={city}&appid={API}&units=metric&lang=ru')
+    res = requests.get(f'https://api.openweathermap.org/data/2.5/weather?q={city}&appid={OPENWEATHER_API}&units=metric&lang=ru')
     data = json.loads(res.text)
     temp = data['main']['temp']
     description = data['weather'][0]['main'].lower()
@@ -52,6 +57,15 @@ def get_weather(message):
             caption=f"{label}\nТемпература: {temp}°C {thermometer}"
         )
 
+def run_bot():
+    bot.polling(none_stop=True)
 
-bot.polling(none_stop=True)
+threading.Thread(target=run_bot).start()
 
+@app.route('/')
+def index():
+    return "Bot is running!"
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
