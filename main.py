@@ -7,8 +7,8 @@ import os
 
 app = Flask(__name__)
 
-TELEGRAM_TOKEN = 'твоя строка токена'
-OPENWEATHER_API = 'твоя строка API'
+TELEGRAM_TOKEN = '8353978400:AAGTWnBSvz3KIfkJAUegpBWjurL_PBvmBhM'
+OPENWEATHER_API = 'e9ed9cc83a633d513fc8fd7acbd2a24b'
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
 
@@ -69,3 +69,4 @@ def index():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
+
