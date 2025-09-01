@@ -1,28 +1,30 @@
-from flask import Flask
-import threading
 import telebot
 import requests
 import json
-import os
+from flask import Flask, request
 
-app = Flask(__name__)
-
-TELEGRAM_TOKEN = '8353978400:AAGTWnBSvz3KIfkJAUegpBWjurL_PBvmBhM'
-OPENWEATHER_API = 'e9ed9cc83a633d513fc8fd7acbd2a24b'
+TELEGRAM_TOKEN = "8353978400:AAGTWnBSvz3KIfkJAUegpBWjurL_PBvmBhM"
+OPENWEATHER_API = "e9ed9cc83a633d513fc8fd7acbd2a24b"
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
+app = Flask(__name__)
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    bot.send_message(message.chat.id, 'Привет! Напиши название города')
+    bot.send_message(message.chat.id, 'Привет! Напиши название города на английском языке')
 
 @bot.message_handler(content_types=['text'])
 def get_weather(message):
     city = message.text.strip().lower()
-    res = requests.get(f'https://api.openweathermap.org/data/2.5/weather?q={city}&appid={OPENWEATHER_API}&units=metric&lang=ru')
+    res = requests.get(f'https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={OPENWEATHER_API}&units=metric&lang=ru')
     data = json.loads(res.text)
-    temp = data['main']['temp']
-    description = data['weather'][0]['main'].lower()
+
+    if data.get("cod") != "200":
+        bot.send_message(message.chat.id, "❌ Город не найден. Напиши название города на английском языке")
+        return
+
+    temp = round(data['list'][0]['main']['temp'])
+    description = data['list'][0]['weather'][0]['main'].lower()
 
     if 'clear' in description:
         label = "Солнечно"
@@ -57,16 +59,20 @@ def get_weather(message):
             caption=f"{label}\nТемпература: {temp}°C {thermometer}"
         )
 
-def run_bot():
-    bot.polling(none_stop=True)
-
-threading.Thread(target=run_bot).start()
+@app.route('/' + TELEGRAM_TOKEN, methods=['POST'])
+def webhook():
+    update = request.stream.read().decode("utf-8")
+    bot.process_new_updates([telebot.types.Update.de_json(update)])
+    return "!", 200
 
 @app.route('/')
 def index():
-    return "Bot is running!"
+    return "Бот работает"
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+if __name__ == "__main__":
+    bot.remove_webhook()
+    bot.set_webhook(url=f"https://openweather365.onrender.com/{TELEGRAM_TOKEN}")
+    app.run(host="0.0.0.0", port=5000)
+
+
 
